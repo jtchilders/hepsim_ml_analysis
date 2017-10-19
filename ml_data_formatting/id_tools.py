@@ -124,3 +124,32 @@ def hasBottom(pid): return _hasQ(pid, 5)
 # Does this particle contain a top quark?
 def hasTop(pid): return _hasQ(pid, 6)
 
+
+
+def jet_overlap_removal(jets,dr_cut = 0.2):
+
+   main_list = []
+
+   for jetA in jets:
+      main_list.append(jetA)
+   
+   imax = len(main_list)
+   i = 0
+   while i < imax:
+      jetA = main_list[i]
+      
+      j = i+1
+      while j < imax:
+         jetB = main_list[j]
+
+         dr = numpy.sqrt( (jetA.eta()-jetB.eta())**2 + (jetA.phi()*jetB.phi())**2  )
+
+         if dr < dr_cut:
+            del main_list[j]
+            imax -= 1
+
+         j += 1
+      i += 1
+
+   return main_list
+
