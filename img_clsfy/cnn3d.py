@@ -15,6 +15,7 @@ def main():
    parser.add_option('-e','--epochs',dest='epochs',help='number of epochs to train',default=10,type='int')
    parser.add_option('-b','--batch-size',dest='batch_size',help='size of each batch of iimages processed per training step.',default=20,type='int')
    parser.add_option('--theano',dest='theano',help='switch from default keras backend of Tensorflow to Theano.',default=False,action='store_true')
+   parser.add_option('--num-classes',dest='num_classes',help='number of classes to categorize images',default=2,type='int')
    parser.add_option('--events-per-file',dest='events_per_file',help='number of events per input file',default=10,type='int')
   
    options,args = parser.parse_args()
@@ -29,6 +30,7 @@ def main():
                      'epochs',
                      'batch_size',
                      'theano',
+                     'num_classes',
                      'events_per_file',
                   ]
 
@@ -60,6 +62,7 @@ def main():
 
    # get image shape
    image_shape = get_image_shape(filelist[0])
+   logger.info('image shape: %s',image_shape)
    
    # calculate how many to use for training
    num_test_files = int(options.test_size*len(filelist))
@@ -86,7 +89,7 @@ def main():
    #   logger.info(' %s events ',len(events))
    
    # get the model
-   model = create_model(image_shape)
+   model = create_model(image_shape,options.num_classes)
    
    # create an optimizer
    opt = keras.optimizers.rmsprop(lr=0.0001,decay=1e-6)
@@ -96,8 +99,8 @@ def main():
                  optimizer=opt,
                  metrics=['accuracy'])
    
-   train_gen   = file_gen.FileSequencer(training_filelist,options.batch_size,options.events_per_file)
-   test_gen    = file_gen.FileSequencer(testing_filelist,options.batch_size,options.events_per_file)
+   train_gen   = file_gen.FileSequencer(training_filelist,options.num_classes,options.batch_size,options.events_per_file)
+   test_gen    = file_gen.FileSequencer(testing_filelist,options.num_classes,options.batch_size,options.events_per_file)
 
    train_steps_per_epoch = ( len(training_filelist) * options.events_per_file ) // options.batch_size
    test_steps_per_epoch  = ( len(testing_filelist)  * options.events_per_file ) // options.batch_size
@@ -119,9 +122,9 @@ def main():
 
 
 def create_model(image_shape,num_classes = 2):
-   
+   logger.debug('image_shape: %s num_classes: %s',image_shape,num_classes)
    model = keras.models.Sequential()
-   add_cifar10_layer(model,True,image_shape)
+   add_cifar10_layer(model,image_shape)
    add_cifar10_layer(model,filters=64)
 
    model.add(keras.layers.Flatten())
@@ -134,7 +137,6 @@ def create_model(image_shape,num_classes = 2):
    return model
 
 def add_cifar10_layer(model,
-                      input_layer=False,
                       image_shape=None,
                       filters = 32,
                       kernel_size= (5,5,5),
@@ -144,7 +146,7 @@ def add_cifar10_layer(model,
                       dropout = 0.25,
                       ):
    
-   if input_layer is not None:
+   if image_shape is not None:
       model.add(keras.layers.Conv3D(filters, kernel_size, padding=padding,input_shape=image_shape))
    else:
       model.add(keras.layers.Conv3D(filters, kernel_size, padding=padding))

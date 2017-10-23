@@ -1,9 +1,9 @@
 import numpy,os,json,random,logging
 logger = logging.getLogger(__name__)
-from keras.utils import Sequence
+import keras
 
 
-class FileSequencer(Sequence):
+class FileSequencer(keras.utils.Sequence):
    """
     Every `Sequence` must implements the `__getitem__` and the `__len__` methods.
     If you want to modify your dataset between epochs you may implement `on_epoch_end`.
@@ -33,13 +33,14 @@ class FileSequencer(Sequence):
     ```
    """
 
-   def __init__(self,filelist,batch_size=20,evt_per_file=10):
+   def __init__(self,filelist,num_classes,batch_size=20,evt_per_file=10):
       self.filelist        = filelist
       self.get_truth_list()
       self.evt_per_file    = evt_per_file
       self.batch_size      = batch_size
       self.nevts           = len(filelist)*self.evt_per_file
       self.nbatches        = int(self.nevts*1./self.batch_size)
+      self.num_classes     = num_classes
       
       logger.debug(' n npz files:  %s',len(self.filelist))
       logger.debug(' n json files: %s',len(self.truthlist))
@@ -47,6 +48,7 @@ class FileSequencer(Sequence):
       logger.debug(' batch size:   %s',self.batch_size)
       logger.debug(' nevts:        %s',self.nevts)
       logger.debug(' n batches:    %s',self.nbatches)
+      logger.debug(' n clases:     %s',self.num_classes)
    
    def get_truth_list(self):
       self.truthlist = []
@@ -99,15 +101,12 @@ class FileSequencer(Sequence):
 
       # convert to numpy array
       np_classes = numpy.array(classes)
-      # have to add a channel index even though it is only 1 dimension in our case
-      old_shape = np_classes.shape
-      new_shape = list(old_shape)
-      new_shape.append(1)
-      new_np_classes = np_classes.reshape(tuple(new_shape))
-
-      logger.debug(' classes: old shape: %s   new_shape %s',old_shape,new_np_classes.shape)
       
-      return new_np_images,new_np_classes
+      # convert to categorical
+      np_classes = keras.utils.to_categorical(np_classes,self.num_classes)
+      logger.debug(' classes shape: %s',np_classes.shape)
+      
+      return new_np_images,np_classes
    
    def get_start_index(self,batch_index):
       
