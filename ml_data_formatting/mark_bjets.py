@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 from __future__ import division
-import os,sys,optparse,logging,glob,numpy,json,time,fastjet,subprocess
+import os,sys,optparse,logging,glob,numpy,json,time,fastjet,subprocess,json
 import multiprocessing as mp
 from pyLCIO import IOIMPL
 reader = IOIMPL.LCFactory.getInstance().createLCReader()
@@ -48,14 +48,10 @@ def main():
 
    returned = pool.imap_unordered(process_file,file_generator(options.filelist))
    
-   output = ''
-   for ret in returned:
-      output += ret
+   pool.close()
+   pool.join() 
 
    
-   # open output file
-   outfile = open(options.output_file,'w')
-   outfile.write(output)
 
    
 
@@ -87,7 +83,11 @@ def process_file(filename):
    #logger.info('filename: %s',filename)
    reader.open(filename.strip())
 
-   output = ''
+   outfilename = filename.replace('.slcio','.bjets')
+   if os.path.exists(outfilename): return
+   outfile = open(outfilename,'w')
+
+   btagged = []
 
    # loop over events
    file_event_counter = 0
@@ -104,7 +104,7 @@ def process_file(filename):
       
       # remove jets that overlap
       jets = id_tools.jet_overlap_removal(jets,drjet/2.)
-
+      event_btag = False
       # loop over jets and identify those that are b-jet candidates
       for jet in jets:
          cons = fastjet.sorted_by_pt(jet.constituents())
@@ -118,15 +118,22 @@ def process_file(filename):
 
          # if this is a b-jet write output to file
          if bjet_tag:
-            output += '%s %10d %10.2f %10.2f %10.2f %10.2f %10.2f %10.2f %10.2f\n' % (filename,file_event_counter,jet.px(),jet.py(),jet.pz(),jet.eta(),jet.phi(),jet.e(),jet.m())
-      
+            output = '%s %10d %10.2f %10.2f %10.2f %10.2f %10.2f %10.2f %10.2f\n' % (filename,file_event_counter,jet.px(),jet.py(),jet.pz(),jet.eta(),jet.phi(),jet.e(),jet.m())
+            outfile.write(output)
+            event_btag = True
+               
       file_event_counter += 1
-
-            
+      
+      if event_btag:
+         btagged.append(1)
+      else:
+         btagged.append(0)
+   
+   json.dump(btagged,open(filename.replace('.slcio','.btagged.json'),'w'))
+       
    # close file
    reader.close()
 
-   return output
       
       
 def get_number_of_files(filename):
