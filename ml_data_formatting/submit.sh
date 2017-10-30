@@ -13,6 +13,6 @@ export KMP_AFFINITY=none
 
 
 
-srun -n 1 -N 1 --ntasks-per-node=1 --cpu_bind=verbose,none --cpus-per-task=272 $JOBDIR/mark_bjets.py -n 64 -f $JOBDIR/pythia8_zprimebb_digi_slcio.filelist -o $SLURM_JOBID_btagged_jets.txt
+srun -n 1 -N 1 --ntasks-per-node=1 --cpu_bind=verbose,none --cpus-per-task=272 $JOBDIR/mark_bjets.py -n 64 -f $JOBDIR/pythia8_qcd_wgt_digi.filelist -o $SLURM_JOBID_btagged_jets.txt
 
 echo [$SECONDS] done

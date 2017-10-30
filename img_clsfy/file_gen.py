@@ -66,7 +66,7 @@ class FileSequencer(keras.utils.Sequence):
       file_index,event_index = self.get_start_index(index)
       #end_file_index,end_event_index = self.get_end_index(start_file_index,start_event_index)
       
-      logger.debug('index: %-10s file_index: %-10s event_index: %-10s',index,file_index,event_index)
+      #logger.debug('index: %-10s file_index: %-10s event_index: %-10s',index,file_index,event_index)
 
       images = []
       classes = []
@@ -87,7 +87,7 @@ class FileSequencer(keras.utils.Sequence):
          event_index = 0
          file_index += 1
       
-      logger.debug(' n images: %-10s n classes: %-10s',len(images),len(classes))
+      #logger.debug(' n images: %-10s n classes: %-10s',len(images),len(classes))
 
       # convert to numpy array
       np_images = numpy.array(images)
@@ -97,15 +97,15 @@ class FileSequencer(keras.utils.Sequence):
       new_shape.append(1)
       new_np_images = np_images.reshape(tuple(new_shape))
       
-      logger.debug(' images: old shape: %s   new_shape %s',old_shape,new_np_images.shape)
+      #logger.debug(' images: old shape: %s   new_shape %s',old_shape,new_np_images.shape)
 
       # convert to numpy array
       np_classes = numpy.array(classes)
       
       # convert to categorical
       np_classes = keras.utils.to_categorical(np_classes,self.num_classes)
-      logger.debug(' classes shape: %s',np_classes.shape)
-      
+      #logger.debug(' classes shape: %s',np_classes.shape)
+      logger.debug('serving images')
       return new_np_images,np_classes
    
    def get_start_index(self,batch_index):
@@ -124,7 +124,7 @@ class FileSequencer(keras.utils.Sequence):
    def on_epoch_end(self):
       """Method called at the end of every epoch.
       """
-      
+      logger.debug('end of epoch') 
       # shuffle the images
       c = list(zip(self.filelist, self.truthlist))
       random.shuffle(c)

@@ -140,8 +140,12 @@ def get_number_of_files(filename):
    
    p = subprocess.Popen('wc -l ' + filename,shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
    out,err = p.communicate()
-
-   return int(out.split()[0])
+   
+   try:
+      return int(out.split()[0])
+   except:
+      logger.exception('error reading number of files: stdout="%s" stderr="%s"',out,err)
+      raise
 
 def get_particle_travel_distance_numpy(p):
    begin = numpy.array(p.getVertexVec())

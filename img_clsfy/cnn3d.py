@@ -128,11 +128,14 @@ def create_model(image_shape,num_classes = 2):
    add_cifar10_layer(model,filters=64)
 
    model.add(keras.layers.Flatten())
-   model.add(keras.layers.Dense(100000))
+   model.add(keras.layers.Dense(100))
    model.add(keras.layers.Activation('relu'))
    model.add(keras.layers.Dropout(0.5))
    model.add(keras.layers.Dense(num_classes))
    model.add(keras.layers.Activation('softmax'))
+   
+   logger.info(model.summary())
+   #sys.exit(-1)
 
    return model
 
